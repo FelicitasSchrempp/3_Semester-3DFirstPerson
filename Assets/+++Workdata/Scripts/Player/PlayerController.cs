@@ -1,5 +1,3 @@
-using System;
-using TreeEditor;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -122,7 +120,7 @@ public class PlayerController : MonoBehaviour
         Vector3 inputDirection = transform.right * _moveInput.x + transform.forward * _moveInput.y;
         inputDirection = Vector3.ClampMagnitude(inputDirection, 1f);
 
-        Vector3 desiredVelocity = inputDirection * walkingSpeed;
+        Vector3 desiredVelocity = inputDirection * _currentSpeed;
         float rate = inputDirection.sqrMagnitude > 0.01f ? acceleration : deceleration;
 
         _moveVelocity = Vector3.Lerp(_moveVelocity, desiredVelocity, rate * Time.deltaTime);
@@ -188,8 +186,17 @@ public class PlayerController : MonoBehaviour
     {
         SetHeight(standingHeight, cameraStandingHeight);
     }
-    
-    //TODO Check if can stand up?
+
+    public bool CanStandUp(LayerMask ceilingMask)
+    {
+        float distance = standingHeight - _characterController.height;
+        if (distance <= 0f) return true;
+
+        float radius = _characterController.radius * _groundCheckRadius;
+        Vector3 origin = transform.position + Vector3.up * (_characterController.height - _characterController.radius);
+
+        return !Physics.SphereCast(origin, radius, Vector3.up, out _, distance, ceilingMask, QueryTriggerInteraction.Ignore);
+    }
 
     private void HandleCameraHeight()
     {
