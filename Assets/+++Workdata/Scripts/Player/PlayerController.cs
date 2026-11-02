@@ -8,6 +8,10 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float acceleration = 10;
     [SerializeField] private float deceleration = 12f;
 
+    [Header("Headbob Settings")] 
+    [SerializeField] private float walkBobSpeed = 12;
+    [SerializeField] private float walkBobAmount = 0.05f;
+    
     [Header("Gravity Settings")] 
     [SerializeField] private float gravity = -9.81f;
     [SerializeField] private float groundStickForce = 2f;
@@ -42,6 +46,9 @@ public class PlayerController : MonoBehaviour
     private float _verticalVelocity;
     private float _xRotation;
     private float _cameraBaseHeight;
+    private float _currentBobSpeed;
+    private float _currentBobAmount;
+    private float _headbobTimer;
     
     private bool _isGrounded;
     
@@ -64,7 +71,8 @@ public class PlayerController : MonoBehaviour
         
         ResetHeight();
         ResetMoveSpeed();
-
+        ResetHeadbob();
+        
         ResetToBaseHeight();
     }
 
@@ -86,6 +94,8 @@ public class PlayerController : MonoBehaviour
         ApplyMovement();
         
         HandleCameraHeight();
+        
+        HandleHeadbob();
     }
 
     private void OnDisable()
@@ -135,6 +145,48 @@ public class PlayerController : MonoBehaviour
     
     #endregion
 
+    #region HeadBob
+
+    public void SetHeadbob(float bobSpeed, float bobAmount)
+    {
+        _currentBobSpeed = bobSpeed;
+        _currentBobAmount = bobAmount;
+    }
+
+    public void ResetHeadbob()
+    {
+        SetHeadbob(walkBobSpeed, walkBobAmount);
+    }
+
+    private void HandleHeadbob()
+    {
+        float targetY = _cameraBaseHeight;
+        bool isMoving = _isGrounded && _moveInput.sqrMagnitude > 0.01f;
+
+        if (isMoving)
+        {
+            _headbobTimer += Time.deltaTime * _currentBobSpeed;
+
+            if (_headbobTimer > Mathf.PI * 2f)
+            {
+                _headbobTimer -= Mathf.PI * 2f;
+            }
+
+            targetY += Mathf.Sin(_headbobTimer) * _currentBobAmount;
+        }
+        else
+        {
+            _headbobTimer = 0;
+        }
+
+        Vector3 pivotPosition = cameraPivot.localPosition;
+        pivotPosition.y = Mathf.Lerp(pivotPosition.y, targetY, 1f - Mathf.Exp(-cameraHeightSmoothing * Time.deltaTime));
+
+        cameraPivot.localPosition = pivotPosition;
+    }
+
+    #endregion
+    
     #region Gravity Methods
 
     private void CheckGround()
@@ -218,6 +270,7 @@ public class PlayerController : MonoBehaviour
         if (newState == MovementState.Walking)
         {
             ResetMoveSpeed();
+            ResetHeadbob();
         }
     }
 

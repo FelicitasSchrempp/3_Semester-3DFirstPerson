@@ -5081,7 +5081,7 @@ MonoBehaviour:
   groundCheckDistance: 0.2
   groundMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 1
   lookHorizontalSensitivity: 0.1
   lookVerticalSensitivity: 0.1
   cameraPivot: {fileID: 2060250983}
