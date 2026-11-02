@@ -121,12 +121,12 @@ public class PlayerControlInput : MonoBehaviour
     
     private void InteractPerformed(InputAction.CallbackContext ctx)
     {
-        print("Interaction perfromed");
+        
     }
     
     private void InteractCanceled(InputAction.CallbackContext ctx)
     {
-        print("Interaction canceled");
+        
     }
 
     private void Crouch(InputAction.CallbackContext ctx)

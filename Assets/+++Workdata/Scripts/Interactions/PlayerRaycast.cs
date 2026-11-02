@@ -40,8 +40,7 @@ public class PlayerRaycast : MonoBehaviour
     {
         BaseInteractable currentInteractable = null;
 
-        if (Physics.Raycast(rayOrigin.position, rayOrigin.forward, out RaycastHit hit, rayDistance, rayMask,
-                QueryTriggerInteraction.Ignore))
+        if (Physics.Raycast(rayOrigin.position, rayOrigin.forward, out RaycastHit hit, rayDistance, rayMask))
         {
             currentInteractable = hit.collider.GetComponentInParent<BaseInteractable>();
         }
