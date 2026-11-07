@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public class DoorInteractable : MonoBehaviour
+public class DoorInteractable : BaseInteractable
 {
     public event Action<int> OnInteract;
     
