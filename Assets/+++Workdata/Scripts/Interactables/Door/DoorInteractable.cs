@@ -1,28 +1,65 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 public class DoorInteractable : BaseInteractable
 {
-    public event Action<int> OnInteract;
-    
-    public bool isOpen = false;
-    public bool interactable = true;
-    
-    public void Interact()
-    {
-        if (!interactable) return;
-        
-        isOpen = !isOpen;
+    #region Private Variables
 
-        if (isOpen)
+    private bool _isStillHovered;
+    private Coroutine _cooldownRoutine;
+
+    #endregion
+
+    #region Unity Events
+
+    /*protected override void OnDisable()
+    {
+        if (_cooldownRoutine != null)
         {
-            Debug.Log("closing");
-            OnInteract?.Invoke(20); // closing
+            StopCoroutine(_cooldownRoutine);
+            _cooldownRoutine = null;
         }
-        else
+
+        canInteract = true;
+        base.OnDisable();
+    }*/
+
+    #endregion
+
+    #region Interaction Methods
+
+    public override void Interact()
+    {
+        if (!canInteract) return;
+
+        base.Interact();
+
+        canInteract = false;
+        base.Unhover(); 
+    }
+
+    public void CanInteractAgain()
+    {
+        canInteract = true;
+        
+        if (_isStillHovered)
         {
-            Debug.Log("opening");
-            OnInteract?.Invoke(10); // opening
+            base.Hover();
         }
     }
+
+    public override void Hover()
+    {
+        _isStillHovered = true;
+        base.Hover();
+    }
+
+    public override void Unhover()
+    {
+        _isStillHovered = false;
+        base.Unhover();
+    }
+
+    #endregion
 }
