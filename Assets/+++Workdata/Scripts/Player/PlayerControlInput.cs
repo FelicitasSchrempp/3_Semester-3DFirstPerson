@@ -32,10 +32,10 @@ public class PlayerControlInput : MonoBehaviour
         _inputActions = new InputSystem_Actions();
         _moveAction = _inputActions.Player.Move;
         _lookAction = _inputActions.Player.Look;
-        _crouchAction = _inputActions.Player.Crouch;
-        _sprintAction = _inputActions.Player.Sprint;
-        _jumpAction = _inputActions.Player.Jump;
         _interactAction = _inputActions.Player.Interact;
+        _crouchAction = _inputActions.Player.Crouch;
+        _jumpAction = _inputActions.Player.Jump;
+        _sprintAction = _inputActions.Player.Sprint;
     }
 
     private void OnEnable()
@@ -65,8 +65,8 @@ public class PlayerControlInput : MonoBehaviour
         _moveAction.canceled += Move;
         
         _interactAction.started += InteractStarted;
-        _interactAction.performed += InteractPerformed;
-        _interactAction.canceled += InteractCanceled;
+        //_interactAction.performed += InteractPerformed;
+        //_interactAction.canceled += InteractCanceled;
 
         _crouchAction.performed += Crouch;
         _crouchAction.canceled += Crouch;
@@ -83,8 +83,8 @@ public class PlayerControlInput : MonoBehaviour
         _moveAction.canceled -= Move;
         
         _interactAction.started -= InteractStarted;
-        _interactAction.performed -= InteractPerformed;
-        _interactAction.canceled -= InteractCanceled;
+        //_interactAction.performed -= InteractPerformed;
+        //_interactAction.canceled -= InteractCanceled;
         
         _crouchAction.performed -= Crouch;
         _crouchAction.canceled -= Crouch;
@@ -118,16 +118,16 @@ public class PlayerControlInput : MonoBehaviour
     {
         InteractPressed?.Invoke();
     }
-    
+    /*
     private void InteractPerformed(InputAction.CallbackContext ctx)
     {
-        
+        print("Interaction perfromed");
     }
     
     private void InteractCanceled(InputAction.CallbackContext ctx)
     {
-        
-    }
+        print("Interaction canceled");
+    }*/
 
     private void Crouch(InputAction.CallbackContext ctx)
     {

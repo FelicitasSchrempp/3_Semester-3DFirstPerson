@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -8,6 +9,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float acceleration = 10;
     [SerializeField] private float deceleration = 12f;
 
+    [Header("Jump Settings")] 
+    [SerializeField] private float jumpHeight = 1.0f;
+    [SerializeField] private float timeToJumpApex = 0.45f;
+    [SerializeField] private float timeToFall = 0.3f;
+    
     [Header("Headbob Settings")] 
     [SerializeField] private float walkBobSpeed = 12;
     [SerializeField] private float walkBobAmount = 0.05f;
@@ -26,8 +32,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask groundMask;
     
     [Header("Look Settings")] 
-    [SerializeField] private float lookHorizontalSensitivity = 0.1f;
-    [SerializeField] private float lookVerticalSensitivity = 0.1f;
+    [SerializeField] private float lookMouseHorizontalSensitivity = 1f;
+    [SerializeField] private float lookMouseVerticalSensitivity = 1f;
+    [SerializeField] private float lookControllerHorizontalSensitivity = 1f;
+    [SerializeField] private float lookControllerVerticalSensitivity = 1f;
+    
     [SerializeField] private Transform cameraPivot;
     [SerializeField] private Vector2 minMaxRotation = new Vector2(-85, 85);
     [SerializeField] private bool invertY;
@@ -44,6 +53,10 @@ public class PlayerController : MonoBehaviour
     
     private float _currentSpeed;
     private float _verticalVelocity;
+    private float _upwardGravity;
+    private float _downwardGravity;
+    private float _jumpVelocity;
+    
     private float _xRotation;
     private float _cameraBaseHeight;
     private float _currentBobSpeed;
@@ -56,18 +69,30 @@ public class PlayerController : MonoBehaviour
     private Vector2 _moveInput;
     private Vector2 _lookInput;
 
+    private float _lookHorizontalSensitivity;
+    private float _lookVerticalSensitivity;
+    
+    #endregion
+
+    #region Properties
+
+    public bool IsGrounded => _isGrounded;
+    public bool CanJump => _isGrounded;
+
     #endregion
 
     #region Unity Event Methods
     private void Awake()
     {
         //TODO: Delete in some time
-        Cursor.lockState = CursorLockMode.Locked;
+        //Cursor.lockState = CursorLockMode.Locked;
         //Cursor.visible = false;
 
         _playerControlInput = GetComponent<PlayerControlInput>();
         _characterController = GetComponent<CharacterController>();
         _playerState = GetComponent<PlayerState>();
+
+        CalculateJumpValues();
         
         ResetHeight();
         ResetMoveSpeed();
@@ -79,6 +104,12 @@ public class PlayerController : MonoBehaviour
     private void OnEnable()
     {
         _playerState.StateChanged += OnStateChanged;
+        InputDeviceTracker.DeviceTypeChanged += SetSensitivityValues;
+    }
+
+    private void Start()
+    {
+        SetSensitivityValues(InputDeviceType.KeyboardMouse);
     }
 
     private void Update()
@@ -93,14 +124,13 @@ public class PlayerController : MonoBehaviour
         
         ApplyMovement();
         
-        HandleCameraHeight();
-        
         HandleHeadbob();
     }
 
     private void OnDisable()
     {
         _playerState.StateChanged -= OnStateChanged;
+        InputDeviceTracker.DeviceTypeChanged -= SetSensitivityValues;
     }
 
     #endregion
@@ -115,8 +145,8 @@ public class PlayerController : MonoBehaviour
 
     private void HandleLook()
     {
-        float mouseX = _lookInput.x * lookHorizontalSensitivity;
-        float mouseY = (invertY ? -1f : 1f) * _lookInput.y * lookVerticalSensitivity;
+        float mouseX = _lookInput.x * _lookHorizontalSensitivity;
+        float mouseY = (invertY ? -1f : 1f) * _lookInput.y * _lookVerticalSensitivity;
 
         _xRotation -= mouseY;
         _xRotation = Mathf.Clamp(_xRotation, minMaxRotation.x, minMaxRotation.y);
@@ -141,6 +171,25 @@ public class PlayerController : MonoBehaviour
         Vector3 finalMovement = _moveVelocity;
         finalMovement.y = _verticalVelocity;
         _characterController.Move(finalMovement * Time.deltaTime);
+    }
+
+    private void CalculateJumpValues()
+    {
+        _jumpVelocity = 2f * jumpHeight / timeToJumpApex;
+        _upwardGravity = 2f * jumpHeight / Mathf.Pow(timeToJumpApex, 2);
+        //_upwardGravity = 2f * jumpHeight / (timeToJumpApex * timeToJumpApex);
+        _downwardGravity = 2f * jumpHeight / Mathf.Pow(timeToFall, 2);
+    }
+
+    private void SetSensitivityValues(InputDeviceType inputDeviceType)
+    {
+        _lookHorizontalSensitivity = inputDeviceType == InputDeviceType.KeyboardMouse
+            ? lookMouseHorizontalSensitivity
+            : lookControllerHorizontalSensitivity;
+
+        _lookVerticalSensitivity = inputDeviceType == InputDeviceType.KeyboardMouse
+            ? lookMouseVerticalSensitivity
+            : lookControllerVerticalSensitivity;
     }
     
     #endregion
@@ -204,17 +253,24 @@ public class PlayerController : MonoBehaviour
     
     private void HandleGravity()
     {
-        if (_characterController.isGrounded && _verticalVelocity < 0f)
+        if (_isGrounded && _verticalVelocity < 0f)
         {
             _verticalVelocity = -groundStickForce;
         }
 
-        _verticalVelocity += gravity * Time.deltaTime;
+        float currentGravity = _verticalVelocity > 0f ? _upwardGravity : _downwardGravity;
+        _verticalVelocity -= currentGravity * Time.deltaTime;
     }    
 
     #endregion
 
     #region Utility Methods
+
+    public void Jump()
+    {
+        _verticalVelocity = _jumpVelocity;
+        _isGrounded = false;
+    }
     
     public void SetMoveSpeed(float speed)
     {
